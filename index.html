@@ -1,493 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-SG">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Celebration Story Builder</title>
-  <style>
-    :root {
-      --bg: #fff8ec;
-      --card: #ffffff;
-      --ink: #263238;
-      --muted: #65727a;
-      --primary: #ff8a3d;
-      --secondary: #7c5cff;
-      --accent: #00a896;
-      --soft: #fff1dc;
-      --soft2: #eef7ff;
-      --pink: #ff5c7a;
-      --shadow: 0 14px 35px rgba(52, 42, 32, 0.14);
-      --radius: 24px;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Trebuchet MS", Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, #ffe2b9 0, transparent 32%),
-        radial-gradient(circle at top right, #d9f6ff 0, transparent 30%),
-        linear-gradient(135deg, #fff8ec, #fffdf8);
-      color: var(--ink);
-      line-height: 1.5;
-    }
-    .confetti {
-      position: fixed; inset: 0; pointer-events: none; opacity: 0.42; z-index: -1;
-      background-image:
-        radial-gradient(#ff8a3d 2px, transparent 3px),
-        radial-gradient(#7c5cff 2px, transparent 3px),
-        radial-gradient(#00a896 2px, transparent 3px),
-        radial-gradient(#ff5c7a 2px, transparent 3px);
-      background-size: 70px 70px, 90px 90px, 110px 110px, 130px 130px;
-      background-position: 0 0, 20px 30px, 50px 10px, 10px 60px;
-    }
-    header, main { max-width: 1100px; margin: 0 auto; padding: 24px; }
-    .hero {
-      margin-top: 10px;
-      background: linear-gradient(135deg, #ffffff 0%, #fff1dc 100%);
-      border: 3px solid #ffe0b8;
-      border-radius: 32px;
-      box-shadow: var(--shadow);
-      padding: 26px;
-      display: grid;
-      grid-template-columns: 1.7fr 0.7fr;
-      gap: 20px;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero:after { content: "🎈✨🎉"; position: absolute; right: 20px; top: 12px; font-size: 34px; letter-spacing: 8px; opacity: 0.7; }
-    h1 { font-size: clamp(2rem, 5vw, 3.45rem); margin: 0 0 6px; color: #41280f; line-height: 1.05; }
-    .subtitle { color: var(--muted); font-size: 1.08rem; margin: 0; max-width: 760px; }
-    .student-box { background: rgba(255,255,255,0.84); border: 2px dashed #ffc27a; border-radius: 22px; padding: 16px; }
-    label { font-weight: 900; display: block; margin-bottom: 6px; }
-    input[type="text"], textarea {
-      width: 100%; border: 2px solid #e8e1d9; border-radius: 15px; padding: 12px 13px;
-      font: inherit; background: #fff; color: var(--ink); outline: none; transition: 0.2s ease;
-    }
-    input[type="text"]:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(255, 138, 61, 0.16); }
-    textarea { min-height: 82px; resize: vertical; }
-    .toolbar { position: sticky; top: 0; z-index: 50; background: rgba(255,248,236,0.9); backdrop-filter: blur(8px); padding: 10px 0 14px; margin-bottom: 16px; }
-    .toolbar-inner { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
-    .progress-wrap { background: #fff; border: 2px solid #ffe0b8; border-radius: 999px; overflow: hidden; height: 24px; box-shadow: inset 0 2px 7px rgba(0,0,0,0.06); }
-    .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), #ffca3a, var(--accent)); transition: width 0.35s ease; }
-    .progress-text { font-weight: 900; color: #5b3a16; margin-top: 5px; font-size: 0.95rem; }
-    .mode-toggle { display: flex; background: #fff; border: 2px solid #e6ddf9; border-radius: 999px; padding: 5px; gap: 5px; box-shadow: 0 8px 22px rgba(124, 92, 255, 0.12); }
-    button, .btn { border: none; border-radius: 999px; padding: 11px 16px; font: inherit; font-weight: 900; cursor: pointer; transition: transform 0.16s ease, background 0.18s ease, color 0.18s ease; }
-    button:hover, .btn:hover { transform: translateY(-1px); }
-    .mode-toggle button { background: transparent; color: var(--secondary); }
-    .mode-toggle button.active { background: var(--secondary); color: #fff; }
-    .grid { display: grid; gap: 18px; }
-    .card { background: var(--card); border: 2px solid rgba(255, 194, 122, 0.65); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); overflow: hidden; }
-    .card h2 { margin: 0 0 8px; font-size: 1.5rem; color: #4d2d0c; display: flex; gap: 10px; align-items: center; }
-    .help { margin-top: 0; color: var(--muted); }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
-    .choice { position: relative; }
-    .choice input { position: absolute; opacity: 0; pointer-events: none; }
-    .choice span { display: inline-flex; align-items: center; gap: 7px; padding: 11px 14px; border: 2px solid #eee2d8; border-radius: 999px; background: #fff; cursor: pointer; font-weight: 900; transition: 0.18s ease; }
-    .choice input:checked + span { background: #fff0d9; border-color: var(--primary); color: #7b3a00; box-shadow: 0 8px 18px rgba(255, 138, 61, 0.16); }
-    .guided-only { display: block; }
-    body.independent .guided-only { display: none !important; }
-    body.independent .card { border-color: rgba(124, 92, 255, 0.35); }
-    .hint { background: #f3f0ff; border-left: 6px solid var(--secondary); padding: 12px 14px; border-radius: 16px; margin: 12px 0; color: #4a3b88; font-weight: 800; }
-    details { background: #fbfbff; border: 2px solid #dfd9ff; border-radius: 18px; padding: 13px 15px; margin: 14px 0; }
-    summary { cursor: pointer; font-weight: 900; color: #4a3b88; }
-    .word-bank { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-    .word { border: 2px solid #d8f3ef; background: #effffb; color: #006f63; border-radius: 999px; padding: 8px 11px; font-weight: 900; cursor: pointer; user-select: none; }
-    .word.phrase { border-color: #ffe1ea; background: #fff3f7; color: #8a2941; }
-    .word:hover { filter: brightness(0.97); }
-    .story-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 12px 0; }
-    .story-step { background: #fff9f2; border: 2px dashed #ffc27a; border-radius: 18px; padding: 12px; text-align: center; font-weight: 900; color: #6a3900; }
-    .mini-note { font-size: 0.94rem; color: var(--muted); margin: 6px 0 0; }
-    .button-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-    .btn.primary { background: var(--primary); color: #fff; }
-    .btn.secondary { background: var(--secondary); color: #fff; }
-    .btn.accent { background: var(--accent); color: #fff; }
-    .message { display: none; margin-top: 10px; font-weight: 900; color: var(--accent); }
-    .copy-box { min-height: 300px; background: #fbfbff; border: 2px solid #d9d3ff; }
-    footer { text-align: center; color: var(--muted); padding: 20px; font-size: 0.95rem; }
-    @media (max-width: 820px) {
-      .hero, .toolbar-inner, .two-col, .three-col, .story-strip { grid-template-columns: 1fr; }
-      .toolbar { position: static; }
-      header, main { padding-left: 14px; padding-right: 14px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Celebration Story Builder</title>
+<style>
+:root{--ink:#263238;--muted:#65727a;--orange:#ff8a3d;--purple:#7c5cff;--teal:#00a896}
+*{box-sizing:border-box}body{margin:0;font:16px/1.5 "Trebuchet MS",Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at top left,#ffe2b9,transparent 34%),radial-gradient(circle at top right,#d9f6ff,transparent 32%),linear-gradient(135deg,#fff8ec,#fffdf8)}
+header,main{max-width:1100px;margin:auto;padding:22px}.hero,.card{background:#fff;border:2px solid #ffe0b8;border-radius:25px;padding:24px;box-shadow:0 12px 30px #342a2020}.hero{background:linear-gradient(135deg,#fff,#fff1dc);display:grid;grid-template-columns:1.7fr .7fr;gap:20px;align-items:center}
+h1{font-size:clamp(2rem,5vw,3.3rem);line-height:1.1;color:#41280f;margin:0 0 10px}h2{font-size:1.5rem;color:#4d2d0c;margin:0 0 8px}.help,.subtitle,.mini{color:var(--muted)}.help{margin:0 0 14px}
+.student{padding:15px;border:2px dashed #ffc27a;border-radius:18px;background:#fff}label{display:block;font-weight:900;margin-bottom:6px}
+input[type=text],textarea{display:block;width:100%;border:2px solid #e8e1d9;border-radius:14px;padding:12px;font:inherit;background:#fff;color:var(--ink)}
+input[type=text]:focus,textarea:focus{outline:3px solid #ff8a3d44;border-color:var(--orange)}textarea{min-height:90px;resize:vertical}
+.grid{display:grid;gap:18px}.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.toolbar{position:sticky;top:0;z-index:2;background:#fff8eced;padding:12px 0;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.progress{height:23px;border:2px solid #ffe0b8;background:#fff;border-radius:99px;overflow:hidden;min-width:220px}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--orange),#ffca3a,var(--teal));transition:width .2s}.progress-label{font-weight:900;color:#5b3a16}
+button{font:inherit;font-weight:900;border:0;border-radius:30px;padding:11px 16px;cursor:pointer}button:focus-visible,.choice input:focus-visible+span{outline:3px solid #333;outline-offset:2px}.modes{display:flex;gap:5px;border:2px solid #e6ddf9;border-radius:30px;background:#fff;padding:5px}.modes button{color:var(--purple);background:transparent}.modes button.active{background:var(--purple);color:#fff}
+.choices,.words,.actions{display:flex;flex-wrap:wrap;gap:10px}.choice{position:relative;display:inline-block}.choice input{position:absolute;opacity:0}.choice span{display:inline-flex;padding:11px 14px;border:2px solid #eee2d8;border-radius:30px;background:#fff;cursor:pointer;font-weight:900}.choice input:checked+span{background:#fff0d9;border-color:var(--orange);color:#7b3a00}
+.hint{margin:14px 0;background:#f3f0ff;border-left:6px solid var(--purple);padding:12px;border-radius:13px;color:#4a3b88;font-weight:bold}
+details{background:#fbfbff;border:2px solid #dfd9ff;border-radius:16px;padding:13px;margin:15px 0}summary{cursor:pointer;font-weight:900;color:#4a3b88}
+.word{display:inline-block;border:2px solid #d8f3ef;background:#effffb;color:#006f63;border-radius:25px;padding:7px 11px;font-weight:bold;cursor:pointer}.word.phrase{border-color:#ffe1ea;background:#fff3f7;color:#8a2941}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}.steps span{background:#fff9f2;border:2px dashed #ffc27a;border-radius:14px;text-align:center;padding:12px;font-weight:900}
+.actions{margin:14px 0}.primary{background:var(--orange);color:white}.secondary{background:var(--purple);color:white}.accent{background:var(--teal);color:white}
+#finalPlan{min-height:310px;background:#fbfbff;border-color:#d9d3ff}footer{text-align:center;padding:20px;color:var(--muted)}body.independent .guided{display:none!important}
+@media(max-width:800px){.hero,.two,.three,.steps{grid-template-columns:1fr}.toolbar{position:static}header,main{padding:14px}}
+@media print{.toolbar,.actions,.guided{display:none!important}body{background:white}.card{box-shadow:none;break-inside:avoid}textarea{min-height:60px}}
+</style>
 </head>
 <body>
-  <div class="confetti"></div>
-  <header>
-    <section class="hero">
-      <div>
-        <h1>🎉 Celebration Story Builder</h1>
-        <p class="subtitle">Plan a meaningful composition about a celebration. A strong story is not just about the event — it helps readers connect with the character and understand why the celebration matters.</p>
-      </div>
-      <div class="student-box">
-        <label for="studentName">Name</label>
-        <input id="studentName" type="text" placeholder="Type your name" />
-      </div>
-    </section>
-  </header>
-
-  <main>
-    <div class="toolbar">
-      <div class="toolbar-inner">
-        <div>
-          <div class="progress-wrap"><div id="progressBar" class="progress-bar"></div></div>
-          <div id="progressText" class="progress-text">Planning Progress: 0%</div>
-        </div>
-        <div class="mode-toggle" aria-label="Choose planner mode">
-          <button id="guidedBtn" class="active" type="button">🌱 Guided Mode</button>
-          <button id="independentBtn" type="button">🚀 Independent Mode</button>
-        </div>
-      </div>
-    </div>
-
-    <section class="grid">
-      <div class="card">
-        <h2>1. My Celebration Snapshot</h2>
-        <p class="help">Start with the basic details. Keep your answers short and clear.</p>
-        <div class="two-col">
-          <div>
-            <label for="celebration">What was the celebration?</label>
-            <input id="celebration" type="text" placeholder="e.g. winning a competition, a family reunion, a birthday surprise" />
-          </div>
-          <div>
-            <label for="reason">Why were you celebrating?</label>
-            <input id="reason" type="text" placeholder="e.g. our hard work had finally paid off" />
-          </div>
-          <div>
-            <label for="people">Who was involved?</label>
-            <input id="people" type="text" placeholder="e.g. my family, classmates, teammates" />
-          </div>
-          <div>
-            <label for="setting">When and where did it happen?</label>
-            <input id="setting" type="text" placeholder="e.g. Friday evening at the school hall" />
-          </div>
-        </div>
-
-        <details class="guided-only">
-          <summary>🕵️ 5W1H Rescue Kit — use this if you are stuck</summary>
-          <p class="mini-note">In an exam, when you cannot think of what to write, quickly ask yourself these questions. You do not need to fill every box here unless it helps you.</p>
-          <div class="three-col">
-            <div><label for="who5w1h">Who?</label><input id="who5w1h" type="text" placeholder="Who was there?" /></div>
-            <div><label for="what5w1h">What?</label><input id="what5w1h" type="text" placeholder="What happened?" /></div>
-            <div><label for="when5w1h">When?</label><input id="when5w1h" type="text" placeholder="When did it happen?" /></div>
-            <div><label for="where5w1h">Where?</label><input id="where5w1h" type="text" placeholder="Where did it happen?" /></div>
-            <div><label for="why5w1h">Why?</label><input id="why5w1h" type="text" placeholder="Why did it matter?" /></div>
-            <div><label for="how5w1h">How?</label><input id="how5w1h" type="text" placeholder="How did people celebrate?" /></div>
-          </div>
-        </details>
-      </div>
-
-      <div class="card">
-        <h2>2. Choose Your Big Idea</h2>
-        <p class="help">What are your characters really celebrating?</p>
-        <div class="pill-row" id="bigIdeaChoices">
-          <label class="choice"><input type="radio" name="bigIdea" value="Celebrating Success"><span>🏆 Success</span></label>
-          <label class="choice"><input type="radio" name="bigIdea" value="Celebrating Relationships"><span>💛 Relationships</span></label>
-          <label class="choice"><input type="radio" name="bigIdea" value="Celebrating Overcoming a Challenge"><span>⛰️ Overcoming a Challenge</span></label>
-          <label class="choice"><input type="radio" name="bigIdea" value="Celebrating Community"><span>🤝 Community</span></label>
-          <label class="choice"><input type="radio" name="bigIdea" value="Celebrating New Beginnings"><span>🌱 New Beginnings</span></label>
-          <label class="choice"><input type="radio" name="bigIdea" value="Celebrating Memories and Heritage"><span>🏮 Memories & Heritage</span></label>
-        </div>
-        <div id="adaptiveHint" class="hint guided-only">Choose a Big Idea to see a helpful focus question.</div>
-        <label for="bigIdeaMeaning">This celebration mattered because...</label>
-        <textarea id="bigIdeaMeaning" placeholder="Explain why this celebration was meaningful."></textarea>
-      </div>
-
-      <div class="card">
-        <h2>3. Build the Story</h2>
-        <p class="help">A celebration becomes meaningful when readers understand what happened before it.</p>
-        <div class="two-col">
-          <div>
-            <label for="beforeDetails">Before the celebration...</label>
-            <textarea id="beforeDetails" placeholder="What difficulty, effort, worry or situation came before the celebration?"></textarea>
-          </div>
-          <div>
-            <label for="problem">The problem / challenge was...</label>
-            <textarea id="problem" placeholder="What made the story interesting or difficult?"></textarea>
-          </div>
-          <div>
-            <label for="turningPoint">The turning point was...</label>
-            <textarea id="turningPoint" placeholder="What changed? Who helped? What did the character decide or realise?"></textarea>
-          </div>
-          <div>
-            <label for="characterFeeling">At first, the character felt...</label>
-            <textarea id="characterFeeling" placeholder="e.g. nervous, disappointed, hopeful, worried, determined"></textarea>
-          </div>
-        </div>
-
-        <details class="guided-only">
-          <summary>💬 Live helping words and phrases</summary>
-          <p class="mini-note" id="storyBankNote">Choose a Big Idea in Part 2. The word bank below will change to match your story.</p>
-          <div class="word-bank" id="storyWordBank" data-target="characterFeeling"></div>
-        </details>
-      </div>
-
-      <div class="card">
-        <h2>4. Story Mountain</h2>
-        <p class="help">Plan the order of your story. One sentence for each part is enough.</p>
-        <div class="story-strip guided-only">
-          <div class="story-step">Beginning</div>
-          <div class="story-step">Build-up</div>
-          <div class="story-step">Problem</div>
-          <div class="story-step">Celebration</div>
-          <div class="story-step">Ending</div>
-        </div>
-        <div class="three-col">
-          <div>
-            <label for="beginning">Beginning</label>
-            <textarea id="beginning" placeholder="Introduce the characters, setting and occasion."></textarea>
-          </div>
-          <div>
-            <label for="middle">Middle</label>
-            <textarea id="middle" placeholder="Show the effort, problem or build-up."></textarea>
-          </div>
-          <div>
-            <label for="ending">Ending</label>
-            <textarea id="ending" placeholder="Show the celebration and what changed."></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>5. Reader Connection</h2>
-        <p class="help">What do you want readers to understand about the character or the Big Idea?</p>
-        <div class="two-col">
-          <div>
-            <label for="readerTakeaway">Readers should realise that...</label>
-            <textarea id="readerTakeaway" placeholder="e.g. success feels more meaningful when we remember the people who helped us."></textarea>
-          </div>
-          <div>
-            <label for="finalLine">Possible final line</label>
-            <textarea id="finalLine" placeholder="Write a meaningful closing sentence."></textarea>
-          </div>
-        </div>
-        <details class="guided-only">
-          <summary>💡 Insight sentence starters</summary>
-          <p class="mini-note">Click a phrase to add it to “Readers should realise that...”</p>
-          <div class="word-bank" data-target="readerTakeaway">
-            <span class="word phrase">hard work makes success sweeter</span>
-            <span class="word phrase">celebrations bring people closer</span>
-            <span class="word phrase">we should treasure the people around us</span>
-            <span class="word phrase">a new beginning can be both scary and exciting</span>
-            <span class="word phrase">traditions help us remember who we are</span>
-            <span class="word phrase">overcoming a challenge can make us stronger</span>
-          </div>
-        </details>
-      </div>
-
-      <div class="card">
-        <h2>6. Generate Padlet-Ready Plan</h2>
-        <p class="help">Click the button to create a neat version of your plan. Then copy and paste it into Padlet.</p>
-        <div class="button-row">
-          <button class="btn primary" type="button" onclick="generatePlan()">✨ Generate My Plan</button>
-          <button class="btn secondary" type="button" onclick="copyPlan()">📋 Copy to Clipboard</button>
-          <button class="btn accent" type="button" onclick="clearPlanner()">🧹 Clear Planner</button>
-        </div>
-        <div id="copyMessage" class="message">Copied! You can now paste your plan into Padlet.</div>
-        <label for="finalPlan" style="margin-top:16px;">My Padlet-Ready Plan</label>
-        <textarea id="finalPlan" class="copy-box" placeholder="Your generated plan will appear here."></textarea>
-      </div>
-    </section>
-  </main>
-
-  <footer>Celebration Story Builder • Plan from event → story → reader connection</footer>
-
-  <script>
-    const guidedBtn = document.getElementById('guidedBtn');
-    const independentBtn = document.getElementById('independentBtn');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    const adaptiveHint = document.getElementById('adaptiveHint');
-
-    const focusQuestions = {
-      'Celebrating Success': '🏆 Focus: What effort or struggle made this success worth celebrating?',
-      'Celebrating Relationships': '💛 Focus: How did this celebration show love, gratitude or family ties?',
-      'Celebrating Overcoming a Challenge': '⛰️ Focus: What challenge did the character overcome before celebrating?',
-      'Celebrating Community': '🤝 Focus: How did people come together and support one another?',
-      'Celebrating New Beginnings': '🌱 Focus: What new chapter began, and how did the character feel about it?',
-      'Celebrating Memories and Heritage': '🏮 Focus: What tradition, memory or heritage should be treasured?'
-    };
-
-    const liveWordBanks = {
-      'Celebrating Success': {
-        note: 'These words help you show effort before success and pride after success.',
-        words: ['determined', 'focused', 'hopeful', 'anxious', 'proud', 'relieved', 'thrilled', 'grateful'],
-        phrases: ['worked tirelessly', 'kept practising', 'my efforts had paid off', 'a wave of pride', 'cheers erupted', 'I could hardly believe it']
-      },
-      'Celebrating Relationships': {
-        note: 'These words help you show warmth, gratitude and close bonds.',
-        words: ['grateful', 'touched', 'loved', 'thankful', 'excited', 'comforted', 'nostalgic', 'warm'],
-        phrases: ['laughter filled the room', 'a warm glow spread through me', 'surrounded by people I loved', 'I treasured that moment', 'we gathered together', 'my heart felt full']
-      },
-      'Celebrating Overcoming a Challenge': {
-        note: 'These words help you show struggle before relief and courage after the challenge.',
-        words: ['worried', 'discouraged', 'exhausted', 'determined', 'brave', 'relieved', 'hopeful', 'stronger'],
-        phrases: ['I almost gave up', 'my heart sank', 'I forced myself to continue', 'a small spark of hope', 'the worst was finally over', 'I had made it through']
-      },
-      'Celebrating Community': {
-        note: 'These words help you show teamwork, belonging and people coming together.',
-        words: ['united', 'thankful', 'cheerful', 'welcomed', 'supported', 'proud', 'included', 'joyful'],
-        phrases: ['everyone played a part', 'shoulder to shoulder', 'the crowd cheered as one', 'we belonged together', 'hands worked busily', 'smiles spread across the room']
-      },
-      'Celebrating New Beginnings': {
-        note: 'These words help you show mixed feelings before a fresh start.',
-        words: ['nervous', 'curious', 'hopeful', 'excited', 'uncertain', 'brave', 'relieved', 'ready'],
-        phrases: ['a new chapter was beginning', 'my stomach fluttered', 'I took a deep breath', 'one step at a time', 'things would be different now', 'I was ready to begin again']
-      },
-      'Celebrating Memories and Heritage': {
-        note: 'These words help you show tradition, memory and appreciation.',
-        words: ['nostalgic', 'thankful', 'proud', 'peaceful', 'curious', 'respectful', 'warm', 'connected'],
-        phrases: ['the familiar scent filled the air', 'stories from long ago', 'a tradition worth keeping', 'I understood my family better', 'memories came flooding back', 'it reminded me of who we were']
-      },
-      default: {
-        note: 'Choose a Big Idea in Part 2. The word bank below will change to match your story.',
-        words: ['nervous', 'hopeful', 'grateful', 'relieved', 'proud', 'touched'],
-        phrases: ['my heart beat quickly', 'laughter filled the air', 'I would never forget that moment']
-      }
-    };
-
-    function setMode(mode) {
-      if (mode === 'guided') {
-        document.body.classList.remove('independent');
-        guidedBtn.classList.add('active');
-        independentBtn.classList.remove('active');
-      } else {
-        document.body.classList.add('independent');
-        independentBtn.classList.add('active');
-        guidedBtn.classList.remove('active');
-      }
-      updateProgress();
-    }
-
-    guidedBtn.addEventListener('click', () => setMode('guided'));
-    independentBtn.addEventListener('click', () => setMode('independent'));
-
-    document.querySelectorAll('input[name="bigIdea"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        adaptiveHint.textContent = focusQuestions[radio.value] || 'Choose a Big Idea to see a helpful focus question.';
-        renderLiveWordBank(radio.value);
-        updateProgress();
-      });
-    });
-
-    document.querySelectorAll('input, textarea').forEach(el => {
-      el.addEventListener('input', updateProgress);
-      el.addEventListener('change', updateProgress);
-    });
-
-
-    function renderLiveWordBank(bigIdea) {
-      const bank = document.getElementById('storyWordBank');
-      const note = document.getElementById('storyBankNote');
-      if (!bank) return;
-      const data = liveWordBanks[bigIdea] || liveWordBanks.default;
-      note.textContent = data.note;
-      bank.innerHTML = [
-        ...data.words.map(word => `<span class="word">${word}</span>`),
-        ...data.phrases.map(phrase => `<span class="word phrase">${phrase}</span>`)
-      ].join('');
-    }
-
-    document.querySelectorAll('.word-bank').forEach(bank => {
-      bank.addEventListener('click', event => {
-        if (!event.target.classList.contains('word')) return;
-        const target = document.getElementById(bank.dataset.target);
-        const text = event.target.textContent;
-        if (!target.value.trim()) target.value = text;
-        else if (!target.value.includes(text)) target.value += ', ' + text;
-        updateProgress();
-      });
-    });
-
-    function getValue(id) { return document.getElementById(id)?.value.trim() || ''; }
-    function getBigIdea() {
-      const chosen = document.querySelector('input[name="bigIdea"]:checked');
-      return chosen ? chosen.value : '';
-    }
-    function optional5W1H() {
-      const items = [
-        ['Who', getValue('who5w1h')], ['What', getValue('what5w1h')], ['When', getValue('when5w1h')],
-        ['Where', getValue('where5w1h')], ['Why', getValue('why5w1h')], ['How', getValue('how5w1h')]
-      ].filter(item => item[1]);
-      return items.length ? '\n5W1H Rescue Notes:\n' + items.map(item => `${item[0]}: ${item[1]}`).join('\n') + '\n' : '';
-    }
-
-    function updateProgress() {
-      const requiredFields = [
-        'studentName', 'celebration', 'reason', 'people', 'setting', 'bigIdeaMeaning',
-        'beforeDetails', 'problem', 'turningPoint', 'characterFeeling',
-        'beginning', 'middle', 'ending',
-        'readerTakeaway', 'finalLine'
-      ];
-      let completed = 0;
-      let total = requiredFields.length + 1;
-      requiredFields.forEach(id => { if (getValue(id).length > 0) completed++; });
-      if (getBigIdea()) completed++;
-      const percent = Math.round((completed / total) * 100);
-      progressBar.style.width = percent + '%';
-      progressText.textContent = `Planning Progress: ${percent}%`;
-    }
-
-    function generatePlan() {
-      const plan = `🎉 My Celebration Story Plan
-
-Name: ${getValue('studentName') || '-'}
+<header><div class="hero"><div><h1>🎉 Celebration Story Builder</h1><p class="subtitle">Plan a meaningful composition about a celebration. A strong story is not just about the event — it helps readers connect with the character and understand why the celebration matters.</p></div><div class="student"><label for="studentName">Name</label><input id="studentName" type="text" placeholder="Type your name"></div></div></header>
+<main>
+<div class="toolbar"><div><div class="progress"><div id="progressBar" class="bar"></div></div><div id="progressText" class="progress-label">Planning Progress: 0%</div></div><div class="modes"><button id="guidedBtn" class="active" type="button">🌱 Guided Mode</button><button id="independentBtn" type="button">🚀 Independent Mode</button></div></div>
+<div class="grid">
+<section class="card"><h2>1. My Celebration Snapshot</h2><p class="help">Start with the basic details. Keep your answers short and clear.</p><div class="two">
+<div><label for="celebration">What was the celebration?</label><input id="celebration" type="text" placeholder="e.g. a birthday surprise, winning a competition"></div>
+<div><label for="reason">Why were you celebrating?</label><input id="reason" type="text" placeholder="e.g. someone was turning twelve"></div>
+<div><label for="people">Who was involved?</label><input id="people" type="text" placeholder="e.g. my family, classmates, teammates"></div>
+<div><label for="setting">When and where did it happen?</label><input id="setting" type="text" placeholder="e.g. Saturday evening at home"></div>
+</div><details class="guided"><summary>🕵️ 5W1H Rescue Kit — use this if you are stuck</summary><p class="mini">Ask yourself these questions to generate ideas.</p><div class="three">
+<div><label for="who5w1h">Who?</label><input id="who5w1h" type="text"></div><div><label for="what5w1h">What?</label><input id="what5w1h" type="text"></div><div><label for="when5w1h">When?</label><input id="when5w1h" type="text"></div><div><label for="where5w1h">Where?</label><input id="where5w1h" type="text"></div><div><label for="why5w1h">Why?</label><input id="why5w1h" type="text"></div><div><label for="how5w1h">How?</label><input id="how5w1h" type="text"></div>
+</div></details></section>
+<section class="card"><h2>2. Choose Your Big Idea</h2><p class="help">What are your characters really celebrating?</p><div class="choices" id="bigIdeaChoices">
+<label class="choice"><input type="radio" name="bigIdea" value="Celebrating Success"><span>🏆 Success</span></label>
+<label class="choice"><input type="radio" name="bigIdea" value="Celebrating Relationships"><span>💛 Relationships</span></label>
+<label class="choice"><input type="radio" name="bigIdea" value="Celebrating Overcoming a Challenge"><span>⛰️ Overcoming a Challenge</span></label>
+<label class="choice"><input type="radio" name="bigIdea" value="Celebrating Community"><span>🤝 Community</span></label>
+<label class="choice"><input type="radio" name="bigIdea" value="Celebrating New Beginnings"><span>🌱 New Beginnings</span></label>
+<label class="choice"><input type="radio" name="bigIdea" value="Celebrating Memories and Heritage"><span>🏮 Memories &amp; Heritage</span></label>
+<label class="choice"><input type="radio" name="bigIdea" value="Celebrating a Birthday"><span>🎂 Birthday</span></label>
+</div><div id="adaptiveHint" class="hint guided">Choose a Big Idea to see a helpful focus question.</div><label for="bigIdeaMeaning">This celebration mattered because...</label><textarea id="bigIdeaMeaning" placeholder="Explain why this celebration was meaningful."></textarea></section>
+<section class="card"><h2>3. Build the Story</h2><p class="help">A celebration becomes meaningful when readers understand what happened before it.</p><div class="two">
+<div><label for="beforeDetails">Before the celebration...</label><textarea id="beforeDetails" placeholder="What happened before the celebration?"></textarea></div>
+<div><label for="problem">The problem / challenge was...</label><textarea id="problem" placeholder="What made the story interesting or difficult?"></textarea></div>
+<div><label for="turningPoint">The turning point was...</label><textarea id="turningPoint" placeholder="What changed? Who helped?"></textarea></div>
+<div><label for="characterFeeling">At first, the character felt...</label><textarea id="characterFeeling" placeholder="e.g. nervous, hopeful, excited"></textarea></div>
+</div><details class="guided"><summary>💬 Live helping words and phrases</summary><p id="storyBankNote" class="mini">Choose a Big Idea in Part 2. The word bank will change to match your story.</p><div id="storyWordBank" class="words" data-target="characterFeeling"></div></details></section>
+<section class="card"><h2>4. Story Mountain</h2><p class="help">Plan the order of your story. One sentence for each part is enough.</p><div class="steps guided"><span>Beginning</span><span>Build-up</span><span>Problem</span><span>Celebration</span><span>Ending</span></div><div class="three">
+<div><label for="beginning">Beginning</label><textarea id="beginning" placeholder="Introduce characters, setting and occasion."></textarea></div>
+<div><label for="middle">Middle</label><textarea id="middle" placeholder="Show the effort, problem or build-up."></textarea></div>
+<div><label for="ending">Ending</label><textarea id="ending" placeholder="Show the celebration and what changed."></textarea></div>
+</div></section>
+<section class="card"><h2>5. Reader Connection</h2><p class="help">What do you want readers to understand about the character or the Big Idea?</p><div class="two">
+<div><label for="readerTakeaway">Readers should realise that...</label><textarea id="readerTakeaway" placeholder="e.g. the best gifts are moments shared with loved ones."></textarea></div>
+<div><label for="finalLine">Possible final line</label><textarea id="finalLine" placeholder="Write a meaningful closing sentence."></textarea></div>
+</div><details class="guided"><summary>💡 Insight sentence starters</summary><p class="mini">Click a phrase to add it to “Readers should realise that...”</p><div class="words" data-target="readerTakeaway"><button type="button" class="word phrase">hard work makes success sweeter</button><button type="button" class="word phrase">celebrations bring people closer</button><button type="button" class="word phrase">we should treasure the people around us</button><button type="button" class="word phrase">a new beginning can be both scary and exciting</button><button type="button" class="word phrase">traditions help us remember who we are</button><button type="button" class="word phrase">the most meaningful birthday gifts cannot be bought</button></div></details></section>
+<section class="card"><h2>6. Generate Padlet-Ready Plan</h2><p class="help">Generate a neat version of your plan. Copy and paste it into Padlet.</p><div class="actions"><button class="primary" id="generateBtn" type="button">✨ Generate My Plan</button><button class="secondary" id="copyBtn" type="button">📋 Copy to Clipboard</button><button class="accent" id="clearBtn" type="button">🧹 Clear Planner</button></div><p id="copyMessage" role="status" aria-live="polite"></p><label for="finalPlan">My Padlet-Ready Plan</label><textarea id="finalPlan" placeholder="Your generated plan will appear here."></textarea></section>
+</div></main>
+<footer>Celebration Story Builder • Plan from event → story → reader connection</footer>
+<script>
+const questions={
+'Celebrating Success':'🏆 Focus: What effort or struggle made this success worth celebrating?',
+'Celebrating Relationships':'💛 Focus: How did this celebration show love, gratitude or family ties?',
+'Celebrating Overcoming a Challenge':'⛰️ Focus: What challenge did the character overcome before celebrating?',
+'Celebrating Community':'🤝 Focus: How did people come together and support one another?',
+'Celebrating New Beginnings':'🌱 Focus: What new chapter began, and how did the character feel about it?',
+'Celebrating Memories and Heritage':'🏮 Focus: What tradition, memory or heritage should be treasured?',
+'Celebrating a Birthday':'🎂 Focus: What made this birthday special or memorable? Was it a surprise, a thoughtful gesture or a lesson about relationships?'
+};
+const banks={
+'Celebrating Success':{note:'Show effort before success and pride afterwards.',words:['determined','focused','hopeful','anxious','proud','relieved','thrilled','grateful'],phrases:['worked tirelessly','kept practising','my efforts had paid off','a wave of pride','cheers erupted']},
+'Celebrating Relationships':{note:'Show warmth, gratitude and close bonds.',words:['grateful','touched','loved','thankful','excited','comforted'],phrases:['laughter filled the room','surrounded by people I loved','my heart felt full']},
+'Celebrating Overcoming a Challenge':{note:'Show struggle before relief.',words:['worried','discouraged','exhausted','determined','brave','relieved'],phrases:['I almost gave up','my heart sank','the worst was finally over']},
+'Celebrating Community':{note:'Show teamwork and belonging.',words:['united','thankful','cheerful','welcomed','supported','joyful'],phrases:['everyone played a part','the crowd cheered as one','we belonged together']},
+'Celebrating New Beginnings':{note:'Show mixed feelings before a fresh start.',words:['nervous','curious','hopeful','excited','uncertain','ready'],phrases:['a new chapter was beginning','my stomach fluttered','I was ready to begin again']},
+'Celebrating Memories and Heritage':{note:'Show tradition, memory and appreciation.',words:['nostalgic','thankful','proud','peaceful','connected'],phrases:['stories from long ago','a tradition worth keeping','memories came flooding back']},
+'Celebrating a Birthday':{note:'Use these words to describe a birthday surprise, feelings and the meaning behind the celebration.',words:['excited','surprised','overjoyed','touched','grateful','speechless','delighted','cherished'],phrases:['a chorus of “Happy Birthday” filled the room','my eyes widened in surprise','candles flickered on the cake','my heart swelled with gratitude','it was a birthday I would never forget','the best gift was being together']},
+default:{note:'Choose a Big Idea to see matching words.',words:['nervous','hopeful','grateful','relieved','proud'],phrases:['laughter filled the air','I would never forget that moment']}
+};
+const $=id=>document.getElementById(id);
+const val=id=>$(id).value.trim();
+const idea=()=>document.querySelector('input[name=bigIdea]:checked')?.value||'';
+function updateProgress(){const ids=['studentName','celebration','reason','people','setting','bigIdeaMeaning','beforeDetails','problem','turningPoint','characterFeeling','beginning','middle','ending','readerTakeaway','finalLine'];const n=ids.filter(id=>val(id)).length+(idea()?1:0);const pct=Math.round(n/(ids.length+1)*100);$('progressBar').style.width=pct+'%';$('progressText').textContent='Planning Progress: '+pct+'%'}
+function updateBank(){const b=banks[idea()]||banks.default;$('adaptiveHint').textContent=questions[idea()]||'Choose a Big Idea to see a helpful focus question.';$('storyBankNote').textContent=b.note;const bank=$('storyWordBank');bank.replaceChildren();for(const [arr,cls] of [[b.words,'word'],[b.phrases,'word phrase']])for(const item of arr){const btn=document.createElement('button');btn.type='button';btn.className=cls;btn.textContent=item;bank.append(btn)}updateProgress()}
+document.querySelectorAll('input[name=bigIdea]').forEach(el=>el.addEventListener('change',updateBank));
+document.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',updateProgress));
+document.querySelectorAll('.words').forEach(bank=>bank.addEventListener('click',e=>{const btn=e.target.closest('.word');if(!btn)return;const field=$(bank.dataset.target),phrase=btn.textContent;if(!field.value.trim())field.value=phrase;else if(!field.value.includes(phrase))field.value+=', '+phrase;updateProgress()}));
+$('guidedBtn').addEventListener('click',()=>setMode(false));$('independentBtn').addEventListener('click',()=>setMode(true));
+function setMode(ind){document.body.classList.toggle('independent',ind);$('guidedBtn').classList.toggle('active',!ind);$('independentBtn').classList.toggle('active',ind)}
+function generatePlan(){const notes=['Who','What','When','Where','Why','How'].map(w=>[w,val(w.toLowerCase()+'5w1h')]).filter(x=>x[1]).map(x=>x.join(': ')).join('\n');$('finalPlan').value=`🎉 My Celebration Story Plan
+Name: ${val('studentName')||'-'}
 
 1. My Celebration
-What: ${getValue('celebration') || '-'}
-Why: ${getValue('reason') || '-'}
-Who: ${getValue('people') || '-'}
-When/Where: ${getValue('setting') || '-'}
-${optional5W1H()}
+What: ${val('celebration')||'-'}
+Why: ${val('reason')||'-'}
+Who: ${val('people')||'-'}
+When/Where: ${val('setting')||'-'}
+${notes?'\n5W1H Rescue Notes:\n'+notes+'\n':''}
 2. Big Idea
-${getBigIdea() || '-'}
-This celebration mattered because: ${getValue('bigIdeaMeaning') || '-'}
+${idea()||'-'}
+This celebration mattered because: ${val('bigIdeaMeaning')||'-'}
 
 3. Build the Story
-Before the celebration: ${getValue('beforeDetails') || '-'}
-Problem/Challenge: ${getValue('problem') || '-'}
-Turning Point: ${getValue('turningPoint') || '-'}
-At first, the character felt: ${getValue('characterFeeling') || '-'}
+Before the celebration: ${val('beforeDetails')||'-'}
+Problem/Challenge: ${val('problem')||'-'}
+Turning point: ${val('turningPoint')||'-'}
+At first, the character felt: ${val('characterFeeling')||'-'}
 
 4. Story Mountain
-Beginning: ${getValue('beginning') || '-'}
-Middle: ${getValue('middle') || '-'}
-Ending: ${getValue('ending') || '-'}
+Beginning: ${val('beginning')||'-'}
+Middle: ${val('middle')||'-'}
+Ending: ${val('ending')||'-'}
 
 5. Reader Connection
-Readers should realise that: ${getValue('readerTakeaway') || '-'}
-Possible final line: ${getValue('finalLine') || '-'}`;
-      document.getElementById('finalPlan').value = plan;
-      updateProgress();
-    }
-
-    async function copyPlan() {
-      const box = document.getElementById('finalPlan');
-      if (!box.value.trim()) generatePlan();
-      box.select();
-      box.setSelectionRange(0, 99999);
-      try { await navigator.clipboard.writeText(box.value); }
-      catch (err) { document.execCommand('copy'); }
-      const msg = document.getElementById('copyMessage');
-      msg.style.display = 'block';
-      setTimeout(() => msg.style.display = 'none', 2500);
-    }
-
-    function clearPlanner() {
-      const ok = confirm('Clear all your planning?');
-      if (!ok) return;
-      document.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
-      document.querySelectorAll('input[type="radio"]').forEach(el => el.checked = false);
-      adaptiveHint.textContent = 'Choose a Big Idea to see a helpful focus question.';
-      renderLiveWordBank();
-      updateProgress();
-    }
-
-    renderLiveWordBank();
-    updateProgress();
-  </script>
+Readers should realise that: ${val('readerTakeaway')||'-'}
+Possible final line: ${val('finalLine')||'-'}`;$('copyMessage').textContent='Your plan is ready to copy.'}
+$('generateBtn').addEventListener('click',generatePlan);
+$('copyBtn').addEventListener('click',async()=>{if(!val('finalPlan'))generatePlan();const t=$('finalPlan');try{await navigator.clipboard.writeText(t.value);$('copyMessage').textContent='Copied! Paste your plan into Padlet.'}catch(e){t.focus();t.select();$('copyMessage').textContent='Select the highlighted plan and press Ctrl+C to copy.'}});
+$('clearBtn').addEventListener('click',()=>{if(!confirm('Clear all your answers?'))return;document.querySelectorAll('input[type=text],textarea').forEach(el=>el.value='');document.querySelectorAll('input[name=bigIdea]').forEach(el=>el.checked=false);$('copyMessage').textContent='';updateBank()});
+updateBank();
+</script>
 </body>
 </html>
