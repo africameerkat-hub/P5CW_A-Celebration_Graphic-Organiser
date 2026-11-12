@@ -25,6 +25,14 @@ details{background:#fbfbff;border:2px solid #dfd9ff;border-radius:16px;padding:1
 #finalPlan{min-height:310px;background:#fbfbff;border-color:#d9d3ff}footer{text-align:center;padding:20px;color:var(--muted)}body.independent .guided{display:none!important}
 @media(max-width:800px){.hero,.two,.three,.steps{grid-template-columns:1fr}.toolbar{position:static}header,main{padding:14px}}
 @media print{.toolbar,.actions,.guided{display:none!important}body{background:white}.card{box-shadow:none;break-inside:avoid}textarea{min-height:60px}}
+.voice-toolbar,.voice-field{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:8px 0}
+.voice-toolbar{margin:0 0 14px;padding:10px 12px;background:#f3f0ff;border-radius:14px}
+.voice-button{padding:5px 10px;border:1px solid #d8cdf7;background:#f5f1ff;color:#4a3b88;font-size:.875rem}
+.voice-button:disabled{opacity:.55;cursor:default}
+.voice-section{margin:0 0 10px}
+.voice-status{color:#4a3b88;font-size:.875rem}
+.voice-status:empty,.voice-button[hidden]{display:none}
+@media print{.voice-toolbar,.voice-field,.voice-section{display:none!important}}
 </style>
 </head>
 <body>
@@ -128,6 +136,246 @@ $('generateBtn').addEventListener('click',generatePlan);
 $('copyBtn').addEventListener('click',async()=>{if(!val('finalPlan'))generatePlan();const t=$('finalPlan');try{await navigator.clipboard.writeText(t.value);$('copyMessage').textContent='Copied! Paste your plan into Padlet.'}catch(e){t.focus();t.select();$('copyMessage').textContent='Select the highlighted plan and press Ctrl+C to copy.'}});
 $('clearBtn').addEventListener('click',()=>{if(!confirm('Clear all your answers?'))return;document.querySelectorAll('input[type=text],textarea').forEach(el=>el.value='');document.querySelectorAll('input[name=bigIdea]').forEach(el=>el.checked=false);$('copyMessage').textContent='';updateBank()});
 updateBank();
+</script>
+<script>
+(() => {
+  const synthesis = window.speechSynthesis;
+  const canRead = Boolean(synthesis && window.SpeechSynthesisUtterance);
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const canDictate = Boolean(Recognition && window.isSecureContext);
+  const language = document.documentElement.lang;
+  let reading = null;
+  let dictation = null;
+
+  function makeButton(text, description = text) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'voice-button';
+    button.textContent = text;
+    button.setAttribute('aria-label', description);
+    return button;
+  }
+
+  function makeStatus() {
+    const status = document.createElement('span');
+    status.className = 'voice-status';
+    status.setAttribute('role', 'status');
+    return status;
+  }
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'voice-toolbar';
+  const readPage = makeButton('Read page aloud');
+  const stopReading = makeButton('Stop reading');
+  const help = document.createElement('span');
+  help.className = 'voice-status';
+  help.textContent = 'Use Read to hear a prompt or answer. Use Speak to dictate into a box.';
+  const readerStatus = makeStatus();
+  toolbar.append(readPage, stopReading, help, readerStatus);
+  document.querySelector('main').prepend(toolbar);
+  stopReading.disabled = true;
+  readPage.disabled = !canRead;
+  if (!canRead) readerStatus.textContent = 'Read-aloud is unavailable in this browser.';
+  if (!canDictate) {
+    help.textContent = 'Website dictation is unavailable here. You can type or use your device’s keyboard dictation.';
+  }
+
+  function cancelReading() {
+    if (!reading) return;
+    reading.button.removeAttribute('aria-current');
+    reading = null;
+    stopReading.disabled = true;
+    synthesis.cancel();
+  }
+
+  function cancelDictation() {
+    if (!dictation) return;
+    const session = dictation;
+    dictation = null;
+    session.button.textContent = 'Speak';
+    session.button.disabled = false;
+    session.button.setAttribute('aria-pressed', 'false');
+    session.button.setAttribute('aria-label', session.idleLabel);
+    session.status.textContent = '';
+    try { session.recognition.abort(); } catch { /* It may already have ended. */ }
+  }
+
+  function speak(text, button) {
+    if (!canRead) return;
+    cancelDictation();
+    if (reading?.button === button) {
+      cancelReading();
+      readerStatus.textContent = 'Reading stopped.';
+      return;
+    }
+    cancelReading();
+    readerStatus.textContent = '';
+    const clean = text.replace(/\p{Extended_Pictographic}[\uFE0F\u200D]*/gu, '').trim();
+    if (!clean) return;
+    const chunks = clean.match(/[^\n.!?]+[.!?]*|[.!?]+/g)?.flatMap(line =>
+      line.trim().match(/.{1,180}(?:\s+|$)|.{1,180}/g) || []
+    ) || [];
+    const voices = synthesis.getVoices();
+    const voice = voices.find(item => item.lang.toLowerCase() === language.toLowerCase())
+      || voices.find(item => item.lang === 'en-GB')
+      || voices.find(item => /^en(?:-|$)/i.test(item.lang));
+    const session = { button, utterance: null };
+    reading = session;
+    button.setAttribute('aria-current', 'true');
+    stopReading.disabled = false;
+
+    function next() {
+      if (reading !== session) return;
+      const chunk = chunks.shift();
+      if (!chunk) {
+        reading = null;
+        button.removeAttribute('aria-current');
+        stopReading.disabled = true;
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(chunk);
+      session.utterance = utterance;
+      if (voice) utterance.voice = voice;
+      utterance.lang = voice?.lang || language;
+      utterance.rate = 0.9;
+      utterance.onend = next;
+      utterance.onerror = () => {
+        if (reading !== session) return;
+        cancelReading();
+        readerStatus.textContent = 'The browser could not read this aloud.';
+      };
+      synthesis.speak(utterance);
+    }
+    next();
+  }
+
+  function fieldText(field) {
+    return [field.value ? 'Your answer: ' + field.value : field.placeholder].filter(Boolean).join('\n');
+  }
+
+  function readText(scope) {
+    const selector = 'h1,h2,p,summary,label,button,footer,input[type=text],textarea,.progress-label,.hint,.steps span,.voice-toolbar .voice-status';
+    return [...scope.querySelectorAll(selector)]
+      .filter(el => !el.closest('.voice-field,.voice-section') && !el.matches('.voice-button'))
+      .filter(el => !document.body.classList.contains('independent') || !el.closest('.guided'))
+      .map(el => el.matches('input,textarea') ? fieldText(el) : el.textContent.trim())
+      .filter(Boolean).join('\n');
+  }
+
+  readPage.addEventListener('click', () => speak(readText(document.body), readPage));
+  stopReading.addEventListener('click', () => {
+    cancelReading();
+    readerStatus.textContent = 'Reading stopped.';
+  });
+
+  document.querySelectorAll('.card').forEach(section => {
+    const heading = section.querySelector('h2');
+    const button = makeButton('Read section', 'Read section: ' + heading.textContent.trim());
+    button.classList.add('voice-section');
+    button.disabled = !canRead;
+    heading.after(button);
+    button.addEventListener('click', () => speak(readText(section), button));
+  });
+
+  const recognitionErrors = {
+    'not-allowed': 'Allow microphone access in your browser, then try again.',
+    'service-not-allowed': 'This browser blocked dictation. You can type or use keyboard dictation.',
+    'audio-capture': 'No microphone was available. Check your microphone and try again.',
+    'no-speech': 'No speech was heard. Select Speak and try again.',
+    network: 'The speech service could not connect. Try again or type your answer.',
+    'language-not-supported': 'The speech service does not support this language setting. You can type or use keyboard dictation.'
+  };
+
+  function startDictation(field, button, status) {
+    if (dictation?.button === button) {
+      try {
+        dictation.recognition.stop();
+        button.disabled = true;
+        status.textContent = 'Finishing dictation…';
+      } catch {
+        cancelDictation();
+      }
+      return;
+    }
+    cancelDictation();
+    cancelReading();
+    readerStatus.textContent = '';
+    const recognition = new Recognition();
+    const session = { recognition, button, status, idleLabel: button.getAttribute('aria-label') };
+    dictation = session;
+    recognition.lang = language;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    function finish() {
+      if (dictation !== session) return false;
+      dictation = null;
+      button.textContent = 'Speak';
+      button.disabled = false;
+      button.setAttribute('aria-pressed', 'false');
+      button.setAttribute('aria-label', session.idleLabel);
+      return true;
+    }
+
+    let added = false;
+    recognition.onstart = () => {
+      if (dictation === session) status.textContent = 'Listening…';
+    };
+    recognition.onresult = event => {
+      if (dictation !== session) return;
+      const transcript = Array.from(event.results).slice(event.resultIndex)
+        .filter(result => result.isFinal).map(result => result[0].transcript.trim()).join(' ').trim();
+      if (!transcript) return;
+      const separator = field.value && !/\s$/.test(field.value) ? ' ' : '';
+      field.value += separator + transcript;
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      added = true;
+    };
+    recognition.onerror = event => {
+      if (finish()) status.textContent = recognitionErrors[event.error] || 'Dictation ended. Select Speak to try again.';
+    };
+    recognition.onend = () => {
+      if (finish()) status.textContent = added ? 'Dictation added.' : 'No words were added.';
+    };
+
+    try {
+      recognition.start();
+      button.textContent = 'Stop';
+      button.setAttribute('aria-label', 'Stop dictation for ' + field.labels[0].textContent.trim());
+      button.setAttribute('aria-pressed', 'true');
+      status.textContent = 'Starting microphone…';
+    } catch {
+      if (finish()) status.textContent = 'The microphone could not start. Try again or type your answer.';
+    }
+  }
+
+  document.querySelectorAll('input[type=text],textarea').forEach(field => {
+    const label = field.labels[0].textContent.trim();
+    const controls = document.createElement('div');
+    controls.className = 'voice-field';
+    const read = makeButton('Read', 'Read ' + label);
+    const dictate = makeButton('Speak', 'Speak an answer for ' + label);
+    const status = makeStatus();
+    read.disabled = !canRead;
+    dictate.disabled = !canDictate;
+    dictate.setAttribute('aria-pressed', 'false');
+    controls.append(read, dictate, status);
+    field.after(controls);
+    read.addEventListener('click', () => speak([label, fieldText(field)].filter(Boolean).join('\n'), read));
+    dictate.addEventListener('click', () => startDictation(field, dictate, status));
+  });
+
+  ['guidedBtn', 'independentBtn', 'clearBtn'].forEach(id => {
+    $(id).addEventListener('click', () => {
+      cancelDictation();
+      cancelReading();
+    }, { capture: true });
+  });
+  window.addEventListener('pagehide', () => {
+    cancelDictation();
+    cancelReading();
+  });
+})();
 </script>
 </body>
 </html>
